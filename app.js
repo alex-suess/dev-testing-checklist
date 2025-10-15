@@ -1,154 +1,6 @@
 // ========================================
-// DATA STRUCTURE & CONSTANTS
+// GLOBAL STATE
 // ========================================
-
-// Hardcoded list of projects
-const PROJECTS = [
-    { id: 'wts', name: 'WTS', color: '#3b82f6' },
-    { id: 'hoerzu/tvdigital', name: 'Hoerzu / TVDigital', color: '#10b981' },
-    { id: 'schoenklinik', name: 'Schön Klinik', color: '#8b5cf6' },
-    { id: 'caritas', name: 'Caritas', color: '#f59e0b' },
-    { id: 'metrohm', name: 'Metrohm', color: '#ef4444' },
-    { id: 'kontron', name: 'Kontron', color: '#ec4899' }
-];
-
-// Predefined checklist items for each category (general)
-const PREDEFINED_ITEMS = {
-    uiux: [
-        'Consistent styling across all pages',
-        'Proper spacing and alignment',
-        'Readable fonts and text sizes',
-        'Sufficient color contrast for accessibility',
-        'Loading states for async operations',
-        'Hover states for interactive elements',
-        'Visual feedback for user actions',
-        'Proper use of whitespace',
-        'Consistent button styles',
-        'Images have alt text',
-        'Icons are intuitive and consistent',
-        'Error messages are clear and helpful'
-    ],
-    functionality: [
-        'All forms validate input correctly',
-        'All buttons perform expected actions',
-        'Links navigate to correct destinations',
-        'Error handling works properly',
-        'Success messages display correctly',
-        'Data saves and loads correctly',
-        'Search functionality works as expected',
-        'Filters and sorting work properly',
-        'Authentication/authorization works',
-        'API calls handle errors gracefully',
-        'No console errors in browser',
-        'All CRUD operations work correctly'
-    ],
-    responsive: [
-        'Mobile view (320px - 480px)',
-        'Tablet view (768px - 1024px)',
-        'Desktop view (1280px+)',
-        'Test in Chrome',
-        'Test in Firefox',
-        'Test in Safari',
-        'Test in Edge',
-        'Touch interactions work on mobile',
-        'Navigation menu works on all screen sizes',
-        'Images scale properly',
-        'Text is readable on all devices',
-        'No horizontal scrolling on mobile'
-    ]
-};
-
-// Project-specific preset checklist items
-const PROJECT_SPECIFIC_ITEMS = {
-    'wts': {
-        uiux: [
-            'WTS branding guidelines followed',
-            'WTS color scheme applied consistently'
-        ],
-        functionality: [
-            'WTS API integration working',
-            'WTS data synchronization verified'
-        ],
-        responsive: [
-            'WTS mobile app compatibility checked'
-        ]
-    },
-    'hoerzu/tvdigital': {
-        uiux: [
-            'TV guide layout optimized',
-            'Program listings readable',
-            'Magazine-style design elements present'
-        ],
-        functionality: [
-            'TV schedule data loading correctly',
-            'Program search working',
-            'Recording reminders functional'
-        ],
-        responsive: [
-            'TV guide grid responsive on all devices'
-        ]
-    },
-    'schoenklinik': {
-        uiux: [
-            'Medical/healthcare design standards met',
-            'Accessibility for patients verified',
-            'Professional healthcare appearance'
-        ],
-        functionality: [
-            'Appointment booking system tested',
-            'Patient portal functionality verified',
-            'HIPAA/GDPR compliance checked'
-        ],
-        responsive: [
-            'Works on tablets in clinical settings'
-        ]
-    },
-    'caritas': {
-        uiux: [
-            'Charity/non-profit design approach',
-            'Donation interface user-friendly',
-            'Inclusive design principles applied'
-        ],
-        functionality: [
-            'Donation processing working',
-            'Volunteer registration tested',
-            'Multi-language support verified'
-        ],
-        responsive: [
-            'Accessible on low-end devices'
-        ]
-    },
-    'metrohm': {
-        uiux: [
-            'Industrial/technical design aesthetic',
-            'Technical documentation accessible',
-            'Product catalog well-organized'
-        ],
-        functionality: [
-            'Product configurator working',
-            'Technical specs display correctly',
-            'B2B ordering system functional'
-        ],
-        responsive: [
-            'Works in industrial tablet environments'
-        ]
-    },
-    'kontron': {
-        uiux: [
-            'Enterprise technology design standards',
-            'Technical product presentation clear',
-            'B2B interface professional'
-        ],
-        functionality: [
-            'Product comparison tools working',
-            'Technical documentation downloads functional',
-            'Partner portal access verified'
-        ],
-        responsive: [
-            'Optimized for business environments'
-        ]
-    }
-};
 
 // Global state
 let tasks = {};
@@ -570,24 +422,24 @@ function renderCategory(category, items) {
     container.innerHTML = '';
 
     items.forEach(item => {
-        const itemDiv = document.createElement('div');
-        itemDiv.className = 'checklist-item flex items-start gap-3 p-3 rounded-lg transition-colors duration-150';
+        const itemLabel = document.createElement('label');
+        itemLabel.className = 'checklist-item flex items-start gap-3 p-3 rounded-lg transition-colors duration-150 cursor-pointer';
         
         const checkboxId = `checkbox-${category}-${item.id}`;
         
-        itemDiv.innerHTML = `
+        itemLabel.innerHTML = `
             <input 
                 type="checkbox" 
                 id="${checkboxId}"
                 ${item.checked ? 'checked' : ''} 
                 onchange="toggleItem('${category}', '${item.id}')"
                 class="mt-1 w-4 h-4 text-slate-600 rounded focus:ring-2 focus:ring-slate-500 cursor-pointer">
-            <label for="${checkboxId}" class="flex-1 text-sm ${item.checked ? 'line-through text-slate-500' : 'text-slate-300'} cursor-pointer">
+            <span class="flex-1 text-sm ${item.checked ? 'line-through text-slate-500' : 'text-slate-300'}">
                 ${escapeHtml(item.label)}
-            </label>
+            </span>
             ${!item.isPredefined ? `
                 <button 
-                    onclick="deleteCustomItem('${category}', '${item.id}')"
+                    onclick="event.preventDefault(); event.stopPropagation(); deleteCustomItem('${category}', '${item.id}')"
                     class="text-red-500 hover:text-red-400 transition-colors duration-150"
                     title="Delete custom item">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -597,7 +449,7 @@ function renderCategory(category, items) {
             ` : ''}
         `;
         
-        container.appendChild(itemDiv);
+        container.appendChild(itemLabel);
     });
 }
 
