@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dev Testing Checklist</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="app.css">
+</head>
+<body class="bg-gray-50 min-h-screen">
+    
+    <!-- Main Container -->
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        
+        <!-- Header Section -->
+        <header class="mb-8">
+            <h1 class="text-4xl font-bold text-slate-300 mb-2">Dev Testing Checklist</h1>
+            <p class="text-slate-400">Track your website testing progress before deployment</p>
+        </header>
+
+        <!-- Project Management Section -->
+        <div class="project-card rounded-lg shadow-xl p-6 mb-8">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-2xl font-semibold text-slate-300">Projects</h2>
+                <button 
+                    id="newProjectBtn" 
+                    class="bg-slate-600 hover:bg-slate-500 text-slate-200 px-4 py-2 rounded-lg transition-colors duration-200 flex items-center gap-2 shadow-lg">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    New Project
+                </button>
+            </div>
+            
+            <!-- Project Selector -->
+            <div class="flex items-center gap-4">
+                <select 
+                    id="projectSelect" 
+                    class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-transparent text-white">
+                    <option value="">Select a project...</option>
+                </select>
+                <button 
+                    id="deleteProjectBtn" 
+                    class="bg-red-700 hover:bg-red-600 text-red-200 px-4 py-2 rounded-lg transition-colors duration-200 disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed shadow-lg"
+                    disabled>
+                    Delete Project
+                </button>
+            </div>
+
+            <!-- Overall Progress -->
+            <div id="overallProgress" class="mt-6 hidden">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-sm font-medium text-slate-400">Overall Progress</span>
+                    <span class="text-sm font-semibold text-slate-400" id="overallProgressText">0%</span>
+                </div>
+                <div class="w-full bg-gray-700 rounded-full h-3">
+                    <div id="overallProgressBar" class="progress-bar-fill bg-slate-500 h-3 rounded-full shadow-lg" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Checklist Categories Section -->
+        <div id="checklistContainer" class="hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                <!-- UI/UX Category -->
+                <div class="category-card rounded-lg shadow-xl p-6">
+                    <div class="mb-4">
+                        <h3 class="text-xl font-semibold text-slate-300 mb-2">UI/UX</h3>
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-xs text-slate-500" id="uiux-progress-text">0 / 0 completed</span>
+                            <span class="text-xs font-semibold text-emerald-600" id="uiux-progress-percent">0%</span>
+                        </div>
+                        <div class="w-full bg-gray-700 rounded-full h-2">
+                            <div id="uiux-progress-bar" class="progress-bar-fill bg-emerald-600 h-2 rounded-full shadow-lg" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Checklist Items -->
+                    <div id="uiux-items" class="space-y-2 mb-4 max-h-96 overflow-y-auto"></div>
+                    
+                    <!-- Add Custom Item -->
+                    <div class="pt-4 border-t border-gray-600">
+                        <div class="flex gap-2">
+                            <input 
+                                type="text" 
+                                id="uiux-custom-input" 
+                                placeholder="Add custom item..."
+                                class="flex-1 px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+                            <button 
+                                onclick="addCustomItem('uiux')" 
+                                class="bg-emerald-700 hover:bg-emerald-600 text-emerald-200 px-3 py-2 rounded transition-colors duration-200 shadow-lg">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Functionality Category -->
+                <div class="category-card rounded-lg shadow-xl p-6">
+                    <div class="mb-4">
+                        <h3 class="text-xl font-semibold text-slate-300 mb-2">Functionality</h3>
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-xs text-slate-500" id="functionality-progress-text">0 / 0 completed</span>
+                            <span class="text-xs font-semibold text-cyan-600" id="functionality-progress-percent">0%</span>
+                        </div>
+                        <div class="w-full bg-gray-700 rounded-full h-2">
+                            <div id="functionality-progress-bar" class="progress-bar-fill bg-cyan-600 h-2 rounded-full shadow-lg" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Checklist Items -->
+                    <div id="functionality-items" class="space-y-2 mb-4 max-h-96 overflow-y-auto"></div>
+                    
+                    <!-- Add Custom Item -->
+                    <div class="pt-4 border-t border-gray-600">
+                        <div class="flex gap-2">
+                            <input 
+                                type="text" 
+                                id="functionality-custom-input" 
+                                placeholder="Add custom item..."
+                                class="flex-1 px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-cyan-500 focus:border-transparent">
+                            <button 
+                                onclick="addCustomItem('functionality')" 
+                                class="bg-cyan-700 hover:bg-cyan-600 text-cyan-200 px-3 py-2 rounded transition-colors duration-200 shadow-lg">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Responsiveness/Cross-browser Category -->
+                <div class="category-card rounded-lg shadow-xl p-6">
+                    <div class="mb-4">
+                        <h3 class="text-xl font-semibold text-slate-300 mb-2">Responsiveness/Cross-browser</h3>
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-xs text-slate-500" id="responsive-progress-text">0 / 0 completed</span>
+                            <span class="text-xs font-semibold text-violet-600" id="responsive-progress-percent">0%</span>
+                        </div>
+                        <div class="w-full bg-gray-700 rounded-full h-2">
+                            <div id="responsive-progress-bar" class="progress-bar-fill bg-violet-600 h-2 rounded-full shadow-lg" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Checklist Items -->
+                    <div id="responsive-items" class="space-y-2 mb-4 max-h-96 overflow-y-auto"></div>
+                    
+                    <!-- Add Custom Item -->
+                    <div class="pt-4 border-t border-gray-600">
+                        <div class="flex gap-2">
+                            <input 
+                                type="text" 
+                                id="responsive-custom-input" 
+                                placeholder="Add custom item..."
+                                class="flex-1 px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-violet-500 focus:border-transparent">
+                            <button 
+                                onclick="addCustomItem('responsive')" 
+                                class="bg-violet-700 hover:bg-violet-600 text-violet-200 px-3 py-2 rounded transition-colors duration-200 shadow-lg">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="text-center py-16">
+            <svg class="mx-auto h-24 w-24 text-slate-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            <h3 class="text-xl font-semibold text-slate-300 mb-2">No Project Selected</h3>
+            <p class="text-slate-400 mb-4">Create a new project or select an existing one to get started</p>
+        </div>
+
+    </div>
+
+    <!-- Modal for New Project -->
+    <div id="newProjectModal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+        <div class="modal-content rounded-lg shadow-2xl p-6 w-full max-w-md mx-4">
+            <h3 class="text-xl font-semibold text-slate-300 mb-4">Create New Project</h3>
+            <input 
+                type="text" 
+                id="projectNameInput" 
+                placeholder="Enter project name..."
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-transparent mb-4">
+            <div class="flex gap-3 justify-end">
+                <button 
+                    id="cancelProjectBtn" 
+                    class="px-4 py-2 text-slate-300 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors duration-200">
+                    Cancel
+                </button>
+                <button 
+                    id="createProjectBtn" 
+                    class="px-4 py-2 bg-slate-600 hover:bg-slate-500 text-slate-200 rounded-lg transition-colors duration-200 shadow-lg">
+                    Create Project
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- External JavaScript -->
+    <script src="app.js"></script>
+
+</body>
+</html>
+
