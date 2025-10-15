@@ -2,7 +2,17 @@
 // DATA STRUCTURE & CONSTANTS
 // ========================================
 
-// Predefined checklist items for each category
+// Hardcoded list of projects
+const PROJECTS = [
+    { id: 'wts', name: 'WTS', color: '#3b82f6' },
+    { id: 'hoerzu/tvdigital', name: 'Hoerzu / TVDigital', color: '#10b981' },
+    { id: 'schoenklinik', name: 'Schön Klinik', color: '#8b5cf6' },
+    { id: 'caritas', name: 'Caritas', color: '#f59e0b' },
+    { id: 'metrohm', name: 'Metrohm', color: '#ef4444' },
+    { id: 'kontron', name: 'Kontron', color: '#ec4899' }
+];
+
+// Predefined checklist items for each category (general)
 const PREDEFINED_ITEMS = {
     uiux: [
         'Consistent styling across all pages',
@@ -48,9 +58,102 @@ const PREDEFINED_ITEMS = {
     ]
 };
 
+// Project-specific preset checklist items
+const PROJECT_SPECIFIC_ITEMS = {
+    'wts': {
+        uiux: [
+            'WTS branding guidelines followed',
+            'WTS color scheme applied consistently'
+        ],
+        functionality: [
+            'WTS API integration working',
+            'WTS data synchronization verified'
+        ],
+        responsive: [
+            'WTS mobile app compatibility checked'
+        ]
+    },
+    'hoerzu/tvdigital': {
+        uiux: [
+            'TV guide layout optimized',
+            'Program listings readable',
+            'Magazine-style design elements present'
+        ],
+        functionality: [
+            'TV schedule data loading correctly',
+            'Program search working',
+            'Recording reminders functional'
+        ],
+        responsive: [
+            'TV guide grid responsive on all devices'
+        ]
+    },
+    'schoenklinik': {
+        uiux: [
+            'Medical/healthcare design standards met',
+            'Accessibility for patients verified',
+            'Professional healthcare appearance'
+        ],
+        functionality: [
+            'Appointment booking system tested',
+            'Patient portal functionality verified',
+            'HIPAA/GDPR compliance checked'
+        ],
+        responsive: [
+            'Works on tablets in clinical settings'
+        ]
+    },
+    'caritas': {
+        uiux: [
+            'Charity/non-profit design approach',
+            'Donation interface user-friendly',
+            'Inclusive design principles applied'
+        ],
+        functionality: [
+            'Donation processing working',
+            'Volunteer registration tested',
+            'Multi-language support verified'
+        ],
+        responsive: [
+            'Accessible on low-end devices'
+        ]
+    },
+    'metrohm': {
+        uiux: [
+            'Industrial/technical design aesthetic',
+            'Technical documentation accessible',
+            'Product catalog well-organized'
+        ],
+        functionality: [
+            'Product configurator working',
+            'Technical specs display correctly',
+            'B2B ordering system functional'
+        ],
+        responsive: [
+            'Works in industrial tablet environments'
+        ]
+    },
+    'kontron': {
+        uiux: [
+            'Enterprise technology design standards',
+            'Technical product presentation clear',
+            'B2B interface professional'
+        ],
+        functionality: [
+            'Product comparison tools working',
+            'Technical documentation downloads functional',
+            'Partner portal access verified'
+        ],
+        responsive: [
+            'Optimized for business environments'
+        ]
+    }
+};
+
 // Global state
-let projects = {};
-let currentProjectId = null;
+let tasks = {};
+let currentTaskId = null;
+let currentProjectFilter = 'all'; // 'all' or a specific project id
 
 // ========================================
 // INITIALIZATION
@@ -60,9 +163,26 @@ let currentProjectId = null;
  * Initialize the application on page load
  */
 function init() {
-    loadProjects();
+    loadTasks();
     setupEventListeners();
-    updateProjectSelector();
+    populateProjectSelectors();
+    
+    // Restore selected task and project filter from sessionStorage (after reload)
+    const savedTaskId = sessionStorage.getItem('selectedTaskId');
+    const savedProjectFilter = sessionStorage.getItem('selectedProjectFilter');
+    
+    if (savedProjectFilter) {
+        currentProjectFilter = savedProjectFilter;
+        document.getElementById('projectFilter').value = savedProjectFilter;
+        sessionStorage.removeItem('selectedProjectFilter');
+    }
+    
+    if (savedTaskId && tasks[savedTaskId]) {
+        currentTaskId = savedTaskId;
+        sessionStorage.removeItem('selectedTaskId');
+    }
+    
+    updateTaskSelector();
     updateUI();
 }
 
@@ -70,27 +190,35 @@ function init() {
  * Set up all event listeners
  */
 function setupEventListeners() {
-    // New project button
-    document.getElementById('newProjectBtn').addEventListener('click', openNewProjectModal);
+    // New task button
+    document.getElementById('newTaskBtn').addEventListener('click', openNewTaskModal);
     
     // Modal buttons
-    document.getElementById('cancelProjectBtn').addEventListener('click', closeNewProjectModal);
-    document.getElementById('createProjectBtn').addEventListener('click', createProject);
+    document.getElementById('cancelTaskBtn').addEventListener('click', closeNewTaskModal);
+    document.getElementById('createTaskBtn').addEventListener('click', createTask);
     
-    // Project selector
-    document.getElementById('projectSelect').addEventListener('change', (e) => {
-        currentProjectId = e.target.value || null;
+    // Project filter
+    document.getElementById('projectFilter').addEventListener('change', (e) => {
+        currentProjectFilter = e.target.value;
+        currentTaskId = null; // Reset selected task when changing project
+        updateTaskSelector();
+        updateUI();
+    });
+    
+    // Task selector
+    document.getElementById('taskSelect').addEventListener('change', (e) => {
+        currentTaskId = e.target.value || null;
         updateDeleteButtonState();
         updateUI();
     });
     
-    // Delete project button
-    document.getElementById('deleteProjectBtn').addEventListener('click', deleteProject);
+    // Delete task button
+    document.getElementById('deleteTaskBtn').addEventListener('click', deleteTask);
     
-    // Enter key in project name input
-    document.getElementById('projectNameInput').addEventListener('keypress', (e) => {
+    // Enter key in task name input
+    document.getElementById('taskNameInput').addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
-            createProject();
+            createTask();
         }
     });
 
@@ -109,28 +237,28 @@ function setupEventListeners() {
 // ========================================
 
 /**
- * Load projects from localStorage
+ * Load tasks from localStorage
  */
-function loadProjects() {
-    const stored = localStorage.getItem('devChecklistProjects');
+function loadTasks() {
+    const stored = localStorage.getItem('devChecklistTasks');
     if (stored) {
         try {
-            projects = JSON.parse(stored);
+            tasks = JSON.parse(stored);
         } catch (e) {
-            console.error('Error loading projects from localStorage:', e);
-            projects = {};
+            console.error('Error loading tasks from localStorage:', e);
+            tasks = {};
         }
     }
 }
 
 /**
- * Save projects to localStorage
+ * Save tasks to localStorage
  */
-function saveProjects() {
+function saveTasks() {
     try {
-        localStorage.setItem('devChecklistProjects', JSON.stringify(projects));
+        localStorage.setItem('devChecklistTasks', JSON.stringify(tasks));
     } catch (e) {
-        console.error('Error saving projects to localStorage:', e);
+        console.error('Error saving tasks to localStorage:', e);
         alert('Error saving data. Your changes may not persist.');
     }
 }
@@ -140,61 +268,135 @@ function saveProjects() {
 // ========================================
 
 /**
- * Open the new project modal
+ * Populate project selectors (filter and modal)
  */
-function openNewProjectModal() {
-    document.getElementById('newProjectModal').classList.remove('hidden');
-    document.getElementById('projectNameInput').value = '';
-    document.getElementById('projectNameInput').focus();
+function populateProjectSelectors() {
+    // Populate project filter
+    const filterSelect = document.getElementById('projectFilter');
+    filterSelect.innerHTML = '<option value="all">All Projects</option>';
+    PROJECTS.forEach(project => {
+        const option = document.createElement('option');
+        option.value = project.id;
+        option.textContent = project.name;
+        filterSelect.appendChild(option);
+    });
+    
+    // Populate project selector in modal
+    const modalSelect = document.getElementById('taskProjectSelect');
+    modalSelect.innerHTML = '';
+    PROJECTS.forEach(project => {
+        const option = document.createElement('option');
+        option.value = project.id;
+        option.textContent = project.name;
+        modalSelect.appendChild(option);
+    });
 }
 
 /**
- * Close the new project modal
+ * Get project by ID
  */
-function closeNewProjectModal() {
-    document.getElementById('newProjectModal').classList.add('hidden');
+function getProjectById(projectId) {
+    return PROJECTS.find(p => p.id === projectId) || null;
+}
+
+// ========================================
+// TASK MANAGEMENT
+// ========================================
+
+/**
+ * Open the new task modal
+ */
+function openNewTaskModal() {
+    document.getElementById('newTaskModal').classList.remove('hidden');
+    document.getElementById('taskNameInput').value = '';
+    
+    // Pre-select the current project filter if not 'all'
+    const projectSelect = document.getElementById('taskProjectSelect');
+    if (currentProjectFilter !== 'all') {
+        projectSelect.value = currentProjectFilter;
+    } else {
+        projectSelect.selectedIndex = 0;
+    }
+    
+    document.getElementById('taskNameInput').focus();
 }
 
 /**
- * Create a new project
+ * Close the new task modal
  */
-function createProject() {
-    const nameInput = document.getElementById('projectNameInput');
+function closeNewTaskModal() {
+    document.getElementById('newTaskModal').classList.add('hidden');
+}
+
+/**
+ * Create a new task
+ */
+function createTask() {
+    const nameInput = document.getElementById('taskNameInput');
+    const projectSelect = document.getElementById('taskProjectSelect');
     const name = nameInput.value.trim();
+    const projectId = projectSelect.value;
     
     if (!name) {
-        alert('Please enter a project name');
+        alert('Please enter a task name');
+        return;
+    }
+    
+    if (!projectId) {
+        alert('Please select a project');
         return;
     }
 
     // Generate unique ID
-    const id = 'project_' + Date.now();
+    const id = 'task_' + Date.now();
     
-    // Create project with predefined items
-    projects[id] = {
+    // Create task with combined predefined items (general + project-specific)
+    tasks[id] = {
         id: id,
         name: name,
+        projectId: projectId,
         created: new Date().toISOString(),
         categories: {
-            uiux: createCategoryItems(PREDEFINED_ITEMS.uiux),
-            functionality: createCategoryItems(PREDEFINED_ITEMS.functionality),
-            responsive: createCategoryItems(PREDEFINED_ITEMS.responsive)
+            uiux: createCategoryItems(getCombinedItems('uiux', projectId)),
+            functionality: createCategoryItems(getCombinedItems('functionality', projectId)),
+            responsive: createCategoryItems(getCombinedItems('responsive', projectId))
         }
     };
 
-    saveProjects();
-    currentProjectId = id;
-    updateProjectSelector();
-    updateUI();
-    closeNewProjectModal();
+    saveTasks();
+    
+    // Store the new task ID and project filter in sessionStorage for restoration after reload
+    sessionStorage.setItem('selectedTaskId', id);
+    sessionStorage.setItem('selectedProjectFilter', projectId);
+    
+    // Reload the page to refresh the task list
+    window.location.reload();
+}
+
+/**
+ * Get combined items for a category (general + project-specific)
+ */
+function getCombinedItems(category, projectId) {
+    // Start with general predefined items
+    const generalItems = [...PREDEFINED_ITEMS[category]];
+    
+    // Add project-specific items if they exist
+    const projectSpecific = PROJECT_SPECIFIC_ITEMS[projectId];
+    if (projectSpecific && projectSpecific[category]) {
+        return [...generalItems, ...projectSpecific[category]];
+    }
+    
+    return generalItems;
 }
 
 /**
  * Create category items from an array of labels
  */
 function createCategoryItems(labels) {
+    const timestamp = Date.now();
+    const randomSuffix = Math.random().toString(36).substring(2, 9);
     return labels.map((label, index) => ({
-        id: 'item_' + Date.now() + '_' + index,
+        id: `item_${timestamp}_${randomSuffix}_${index}`,
         label: label,
         checked: false,
         isPredefined: true
@@ -202,17 +404,17 @@ function createCategoryItems(labels) {
 }
 
 /**
- * Delete the current project
+ * Delete the current task
  */
-function deleteProject() {
-    if (!currentProjectId) return;
+function deleteTask() {
+    if (!currentTaskId) return;
     
-    const projectName = projects[currentProjectId].name;
-    if (confirm(`Are you sure you want to delete "${projectName}"? This action cannot be undone.`)) {
-        delete projects[currentProjectId];
-        saveProjects();
-        currentProjectId = null;
-        updateProjectSelector();
+    const taskName = tasks[currentTaskId].name;
+    if (confirm(`Are you sure you want to delete "${taskName}"? This action cannot be undone.`)) {
+        delete tasks[currentTaskId];
+        saveTasks();
+        currentTaskId = null;
+        updateTaskSelector();
         updateUI();
     }
 }
@@ -221,9 +423,9 @@ function deleteProject() {
  * Update the delete button's disabled state
  */
 function updateDeleteButtonState() {
-    const deleteBtn = document.getElementById('deleteProjectBtn');
+    const deleteBtn = document.getElementById('deleteTaskBtn');
     
-    if (currentProjectId) {
+    if (currentTaskId) {
         deleteBtn.disabled = false;
         deleteBtn.removeAttribute('disabled');
     } else {
@@ -233,20 +435,28 @@ function updateDeleteButtonState() {
 }
 
 /**
- * Update the project selector dropdown
+ * Update the task selector dropdown
  */
-function updateProjectSelector() {
-    const select = document.getElementById('projectSelect');
+function updateTaskSelector() {
+    const select = document.getElementById('taskSelect');
     
     // Clear existing options except the first one
-    select.innerHTML = '<option value="">Select a project...</option>';
+    select.innerHTML = '<option value="">Select a task...</option>';
     
-    // Add project options
-    Object.values(projects).forEach(project => {
+    // Filter tasks based on current project filter
+    const filteredTasks = Object.values(tasks).filter(task => {
+        if (currentProjectFilter === 'all') return true;
+        return task.projectId === currentProjectFilter;
+    });
+    
+    // Add task options
+    filteredTasks.forEach(task => {
         const option = document.createElement('option');
-        option.value = project.id;
-        option.textContent = project.name;
-        if (project.id === currentProjectId) {
+        option.value = task.id;
+        const project = getProjectById(task.projectId);
+        const projectName = project ? project.name : 'Unknown Project';
+        option.textContent = `${task.name} (${projectName})`;
+        if (task.id === currentTaskId) {
             option.selected = true;
         }
         select.appendChild(option);
@@ -264,12 +474,12 @@ function updateProjectSelector() {
  * Toggle a checklist item's checked state
  */
 function toggleItem(category, itemId) {
-    if (!currentProjectId) return;
+    if (!currentTaskId) return;
     
-    const item = projects[currentProjectId].categories[category].find(i => i.id === itemId);
+    const item = tasks[currentTaskId].categories[category].find(i => i.id === itemId);
     if (item) {
         item.checked = !item.checked;
-        saveProjects();
+        saveTasks();
         updateUI();
     }
 }
@@ -278,7 +488,7 @@ function toggleItem(category, itemId) {
  * Add a custom item to a category
  */
 function addCustomItem(category) {
-    if (!currentProjectId) return;
+    if (!currentTaskId) return;
     
     const input = document.getElementById(`${category}-custom-input`);
     const label = input.value.trim();
@@ -295,8 +505,8 @@ function addCustomItem(category) {
         isPredefined: false
     };
 
-    projects[currentProjectId].categories[category].push(newItem);
-    saveProjects();
+    tasks[currentTaskId].categories[category].push(newItem);
+    saveTasks();
     input.value = '';
     updateUI();
 }
@@ -305,14 +515,14 @@ function addCustomItem(category) {
  * Delete a custom item from a category
  */
 function deleteCustomItem(category, itemId) {
-    if (!currentProjectId) return;
+    if (!currentTaskId) return;
     
-    const categoryItems = projects[currentProjectId].categories[category];
+    const categoryItems = tasks[currentTaskId].categories[category];
     const itemIndex = categoryItems.findIndex(i => i.id === itemId);
     
     if (itemIndex !== -1 && !categoryItems[itemIndex].isPredefined) {
         categoryItems.splice(itemIndex, 1);
-        saveProjects();
+        saveTasks();
         updateUI();
     }
 }
@@ -325,7 +535,7 @@ function deleteCustomItem(category, itemId) {
  * Update the entire UI based on current state
  */
 function updateUI() {
-    if (currentProjectId && projects[currentProjectId]) {
+    if (currentTaskId && tasks[currentTaskId]) {
         renderChecklist();
         updateAllProgress();
         document.getElementById('checklistContainer').classList.remove('hidden');
@@ -339,17 +549,17 @@ function updateUI() {
 }
 
 /**
- * Render all checklist items for the current project
+ * Render all checklist items for the current task
  */
 function renderChecklist() {
-    if (!currentProjectId) return;
+    if (!currentTaskId) return;
     
-    const project = projects[currentProjectId];
+    const task = tasks[currentTaskId];
     
     // Render each category
-    renderCategory('uiux', project.categories.uiux);
-    renderCategory('functionality', project.categories.functionality);
-    renderCategory('responsive', project.categories.responsive);
+    renderCategory('uiux', task.categories.uiux);
+    renderCategory('functionality', task.categories.functionality);
+    renderCategory('responsive', task.categories.responsive);
 }
 
 /**
@@ -395,17 +605,17 @@ function renderCategory(category, items) {
  * Update all progress indicators
  */
 function updateAllProgress() {
-    if (!currentProjectId) return;
+    if (!currentTaskId) return;
     
-    const project = projects[currentProjectId];
+    const task = tasks[currentTaskId];
     
     // Update each category's progress
-    updateCategoryProgress('uiux', project.categories.uiux);
-    updateCategoryProgress('functionality', project.categories.functionality);
-    updateCategoryProgress('responsive', project.categories.responsive);
+    updateCategoryProgress('uiux', task.categories.uiux);
+    updateCategoryProgress('functionality', task.categories.functionality);
+    updateCategoryProgress('responsive', task.categories.responsive);
     
     // Update overall progress
-    updateOverallProgress(project);
+    updateOverallProgress(task);
 }
 
 /**
@@ -422,13 +632,13 @@ function updateCategoryProgress(category, items) {
 }
 
 /**
- * Update overall project progress
+ * Update overall task progress
  */
-function updateOverallProgress(project) {
+function updateOverallProgress(task) {
     const allItems = [
-        ...project.categories.uiux,
-        ...project.categories.functionality,
-        ...project.categories.responsive
+        ...task.categories.uiux,
+        ...task.categories.functionality,
+        ...task.categories.responsive
     ];
 
     const total = allItems.length;
